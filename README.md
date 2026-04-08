@@ -97,5 +97,5 @@ Solution: This is a known hiccup with the crt.sh database and not a bug in the s
 
 ## ⚠️ Disclaimer
 
-This tool is designed **strictly for authorized security testing, educational purposes, and bug bounty programs**. Do not use this tool against infrastructure you do not own or have explicit permission to test. The author is not responsible for any misuse of this tool.
-This tool is tested on kali linux.
+- This tool is designed **strictly for authorized security testing, educational purposes, and bug bounty programs**. Do not use this tool against infrastructure you do not own or have explicit permission to test. The author is not responsible for any misuse of this tool.
+- This tool is tested on kali linux.
