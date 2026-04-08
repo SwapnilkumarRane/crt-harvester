@@ -11,6 +11,8 @@
 
 **crt-harvester** is a fast, multithreaded passive reconnaissance tool designed for bug bounty hunters and penetration testers. It fetches TLS/SSL certificate transparency logs directly from the **[crt.sh](https://crt.sh/)** database to enumerate subdomains, resolves their IP addresses, performs alive/dead checking, and generates beautifully styled HTML reports.
 
+<img width="1250" height="735" alt="image" src="https://github.com/user-attachments/assets/401e7457-36bb-427a-9057-ef73afdbaf8d" />
+
 ---
 
 ## 🚀 Features
@@ -57,6 +59,9 @@ Options:
   -t <threads>   Thread count             | Example: ./crt-harvester.sh -d example.com -t 50
 ```
 
+<img width="864" height="503" alt="image" src="https://github.com/user-attachments/assets/03d99372-ea5d-4a47-bf14-b0cd788bec7c" />
+
+
 ### Examples
 
 **Search for a specific domain:**
@@ -79,14 +84,14 @@ All findings are automatically saved into an `output/` directory created in your
 - `domain.example.com_dead.txt` - Hosts that resolved to an IP but did not respond to ping, or failed to resolve.
 - **`domain.example.com_report.html`** - A styled, interactive HTML table presenting all findings in a single dashboard.
 
-🛠️ Troubleshooting
+## 🛠️ Troubleshooting
+
 "No valid results extracted" Error
 Because this tool relies on the public crt.sh API, you may occasionally run into temporary server timeouts. If you see the following output:
 
-text
 [*] Querying crt.sh for domain: example.com
 [!] No valid results extracted.
-Solution: This is a known hiccup with the crt.sh database and not a bug in the script. Simply re-run your command after a few seconds and it should fetch the data successfully.
+Solution: This is a known hiccup with the crt.sh database and not a bug in the script. Simply re-run your command after a few minutes and it should fetch the data successfully.
 
 
 ## ⚠️ Disclaimer
