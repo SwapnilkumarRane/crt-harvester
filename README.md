@@ -11,7 +11,8 @@
 
 **crt-harvester** is a fast, multithreaded passive reconnaissance tool designed for bug bounty hunters and penetration testers. It fetches TLS/SSL certificate transparency logs directly from the **[crt.sh](https://crt.sh/)** database to enumerate subdomains, resolves their IP addresses, performs alive/dead checking, and generates beautifully styled HTML reports.
 
-<img width="1250" height="735" alt="image" src="https://github.com/user-attachments/assets/401e7457-36bb-427a-9057-ef73afdbaf8d" />
+<img width="1270" height="743" alt="image" src="https://github.com/user-attachments/assets/f05a0ac0-138b-48d7-858d-5ae907214fa6" />
+
 
 ---
 
@@ -59,7 +60,7 @@ Options:
   -t <threads>   Thread count             | Example: ./crt-harvester.sh -d example.com -t 50
 ```
 
-<img width="869" height="502" alt="image" src="https://github.com/user-attachments/assets/9b33ec9a-5a47-4cea-9dd7-8467498ecfba" />
+<img width="1270" height="743" alt="image" src="https://github.com/user-attachments/assets/9b33ec9a-5a47-4cea-9dd7-8467498ecfba" />
 
 
 
