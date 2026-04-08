@@ -72,7 +72,7 @@ Options:
 
 **Search by Organization name with 40 threads:**
 ```bash
-./crt-harvester.sh -o "Example Inc" -t 40
+./crt-harvester.sh -o example.com -t 40
 ```
 
 ## 📂 Output Structure
