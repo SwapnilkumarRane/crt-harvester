@@ -41,8 +41,19 @@ sudo apt install curl jq dnsutils iputils-ping -y
 
 ## 🛠️ Installation
 
-Clone the repository and make the script executable:
+Using curl:
 
+```bash
+curl -O https://raw.githubusercontent.com/SwapnilkumarRane/crt-harvester/main/crt-harvester.sh && chmod +x crt-harvester.sh
+```
+
+Using wget:
+
+```bash
+wget https://raw.githubusercontent.com/SwapnilkumarRane/crt-harvester/main/crt-harvester.sh && chmod +x crt-harvester.sh
+```
+
+Clone the Repo and give executable permissions
 ```bash
 git clone https://github.com/SwapnilkumarRane/crt-harvester.git
 cd crt-harvester
