@@ -79,6 +79,16 @@ All findings are automatically saved into an `output/` directory created in your
 - `domain.example.com_dead.txt` - Hosts that resolved to an IP but did not respond to ping, or failed to resolve.
 - **`domain.example.com_report.html`** - A styled, interactive HTML table presenting all findings in a single dashboard.
 
+🛠️ Troubleshooting
+"No valid results extracted" Error
+Because this tool relies on the public crt.sh API, you may occasionally run into temporary server timeouts. If you see the following output:
+
+text
+[*] Querying crt.sh for domain: example.com
+[!] No valid results extracted.
+Solution: This is a known hiccup with the crt.sh database and not a bug in the script. Simply re-run your command after a few seconds and it should fetch the data successfully.
+
+
 ## ⚠️ Disclaimer
 
 This tool is designed **strictly for authorized security testing, educational purposes, and bug bounty programs**. Do not use this tool against infrastructure you do not own or have explicit permission to test. The author is not responsible for any misuse of this tool.
