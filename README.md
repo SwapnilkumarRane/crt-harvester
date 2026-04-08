@@ -55,11 +55,12 @@ Options:
 
   -h             Help
   -d <domain>    Search by Domain Name    | Example: ./crt-harvester.sh -d example.com
-  -o <org>       Search by Organization   | Example: ./crt-harvester.sh -o example+inc
+  -o <org>       Search by Organization   | Example: ./crt-harvester.sh -o example
   -t <threads>   Thread count             | Example: ./crt-harvester.sh -d example.com -t 50
 ```
 
-<img width="864" height="503" alt="image" src="https://github.com/user-attachments/assets/03d99372-ea5d-4a47-bf14-b0cd788bec7c" />
+<img width="869" height="502" alt="image" src="https://github.com/user-attachments/assets/9b33ec9a-5a47-4cea-9dd7-8467498ecfba" />
+
 
 
 ### Examples
@@ -97,3 +98,4 @@ Solution: This is a known hiccup with the crt.sh database and not a bug in the s
 ## ⚠️ Disclaimer
 
 This tool is designed **strictly for authorized security testing, educational purposes, and bug bounty programs**. Do not use this tool against infrastructure you do not own or have explicit permission to test. The author is not responsible for any misuse of this tool.
+This tool is tested on kali linux.
