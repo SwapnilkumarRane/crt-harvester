@@ -36,7 +36,7 @@ Ensure you have the following standard Linux utilities installed before running 
 **To install dependencies on Debian/Ubuntu:**
 ```bash
 sudo apt update
-sudo apt install curl jq dnsutils iputils-ping -y
+sudo apt install curl jq dnsutils iputils-ping subfinder -y
 ```
 
 ## 🛠️ Installation
@@ -66,13 +66,19 @@ chmod +x crt-harvester.sh
 Options:
 
   -h             Help
-  -d <domain>    Search by Domain Name    | Example: ./crt-harvester.sh -d example.com
-  -o <org>       Search by Organization   | Example: ./crt-harvester.sh -o example
-  -t <threads>   Thread count             | Example: ./crt-harvester.sh -d example.com -t 50
+  -d <domain>    Search Domain Name    | Example: ./crt-harvester.sh -d example.com
+  -t <threads>   Thread count (default: 20)
+  -m             Monitor CPU/Memory in background while scanning
+                   Generates: output/perf_report.html + output/perf_monitor.csv
+                   Summary printed at end of scan
+  -P             Generate PDF output for all HTML reports
+                   Requires: chromium-browser, chromium, or google-chrome
+
 ```
 
-<img width="1270" height="743" alt="image" src="https://github.com/user-attachments/assets/9b33ec9a-5a47-4cea-9dd7-8467498ecfba" />
+<img width="1270" height="743" alt="image" src="https://github.com/user-attachments/assets/f8cfbaad-59b6-487f-9078-3888ae20a333" />
 
+<img width="1270" height="743" alt="image" src="https://github.com/user-attachments/assets/f916b1dd-d044-4a65-b092-3ee649ed1871" />
 
 
 ### Examples
@@ -82,9 +88,9 @@ Options:
 ./crt-harvester.sh -d example.com
 ```
 
-**Search by Organization name with 40 threads:**
+**Search by Domain name with 40 threads:**
 ```bash
-./crt-harvester.sh -o example.com -t 40
+./crt-harvester.sh -d example.com -t 40
 ```
 
 ## 📂 Output Structure
