@@ -691,6 +691,73 @@ ResolveAndCheck() {
 
 mkdir -p output
 
+# Function to check if crt.sh is up
+check_crtsh_status() {
+    echo -e "\e[34m[*] Checking if crt.sh is accessible...\e[0m"
+    
+    # Use curl to get the HTTP status code of crt.sh (timeout set to 10 seconds)
+    HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}\n" --connect-timeout 10 https://crt.sh/)
+    
+    if [ "$HTTP_STATUS" -eq 200 ] || [ "$HTTP_STATUS" -eq 301 ] || [ "$HTTP_STATUS" -eq 302 ]; then
+        echo -e "\e[32m[+] crt.sh is online (Status: $HTTP_STATUS). Proceeding with scan...\e[0m"
+    elif [ "$HTTP_STATUS" -eq 502 ] || [ "$HTTP_STATUS" -eq 503 ] || [ "$HTTP_STATUS" -eq 504 ]; then
+        echo -e "\e[31m[-] Error: crt.sh is currently down or overloaded (Status: $HTTP_STATUS). Please try again later.\e[0m"
+        exit 1
+    elif [ "$HTTP_STATUS" -eq 429 ]; then
+        echo -e "\e[31m[-] Error: You are being rate-limited by crt.sh (Status: 429). Please wait before trying again.\e[0m"
+        exit 1
+    else
+        echo -e "\e[31m[-] Error: Unreachable or unexpected response from crt.sh (Status: $HTTP_STATUS).\e[0m"
+        exit 1
+    fi
+}
+
+
+# ─── crt.sh availability check ─────────────────────────────────────────────
+check_crtsh_status() {
+    local ISDOWN_API="https://isitdown.site/api/v1/crt.sh"
+    local result is_down response_code
+
+    # Query the isitdown.site API (5s timeout, silent)
+    result=$(curl -sf --max-time 5 "$ISDOWN_API" 2>/dev/null)
+
+    if [[ $? -ne 0 || -z "$result" ]]; then
+        # If the checker itself is unreachable, do a direct probe of crt.sh
+        echo "[!] isitdown.site API unreachable — probing crt.sh directly..."
+        local http_code
+        http_code=$(curl -o /dev/null -sw "%{http_code}" \
+            --max-time 8 "https://crt.sh/?q=example.com&output=json" 2>/dev/null)
+
+        if [[ "$http_code" == "429" ]]; then
+            echo "[!] crt.sh is rate-limiting requests (HTTP 429). Skipping crt.sh."
+            return 1
+        elif [[ "$http_code" != "200" ]]; then
+            echo "[!] crt.sh returned HTTP $http_code. Skipping crt.sh."
+            return 1
+        fi
+        return 0
+    fi
+
+    # Parse JSON response — use python3 if jq not available
+    if command -v jq &>/dev/null; then
+        is_down=$(echo "$result" | jq -r '.isitdown')
+        response_code=$(echo "$result" | jq -r '.response_code')
+    else
+        is_down=$(echo "$result" | python3 -c \
+            "import sys,json; d=json.load(sys.stdin); print(str(d['isitdown']).lower())" 2>/dev/null)
+        response_code=$(echo "$result" | python3 -c \
+            "import sys,json; d=json.load(sys.stdin); print(d['response_code'])" 2>/dev/null)
+    fi
+
+    if [[ "$is_down" == "true" ]]; then
+        echo "[!] crt.sh appears DOWN globally (isitdown.site reports: down, code: $response_code). Skipping crt.sh."
+        return 1
+    fi
+
+    echo "[+] crt.sh is UP (response code: $response_code)."
+    return 0
+}
+
 # ─── Domain ──────────────────────────────────────────────────
 Domain() {
     if [ -z "$req" ]; then
@@ -702,32 +769,91 @@ Domain() {
     local merged_file="output/domain.${req}.txt"
     local crtsh_results=""
 
-    # ── crt.sh query (retry up to 3x, graceful fallback on failure) ──
-    echo -e "${BLUE}[*]${NC} Querying crt.sh for domain: $req"
-    local response=""
-    local retry=0
-    while [ $retry -lt 3 ]; do
-        response=$(curl -s --max-time 20 --connect-timeout 10 \
-            "https://crt.sh/?q=%25.$req&output=json" 2>/dev/null)
-        [ -n "$response" ] && [ "$response" != "[]" ] && break
-        retry=$(( retry + 1 ))
-        echo -e "${YELLOW}[!] crt.sh attempt $retry/3 failed or empty — retrying...${NC}"
-        sleep 2
-    done
+    # ── crt.sh availability check before querying ──
+    echo -e "${BLUE}[*]${NC} Checking crt.sh availability..."
+    local crtsh_available=1
+    local isdown_result is_down response_code
 
-    if [ -z "$response" ] || [ "$response" = "[]" ]; then
-        echo -e "${YELLOW}[!] crt.sh unreachable or returned no results — continuing with subfinder only.${NC}"
-    else
-        crtsh_results=$(echo "$response" | jq -r '.[].common_name, .[].name_value' 2>/dev/null | CleanResults)
-        if [ -z "$crtsh_results" ]; then
-            echo -e "${YELLOW}[!] crt.sh response had no valid subdomains — continuing with subfinder only.${NC}"
+    isdown_result=$(curl -sf --max-time 5 "https://isitdown.site/api/v1/crt.sh" 2>/dev/null)
+
+    if [[ $? -ne 0 || -z "$isdown_result" ]]; then
+        # isitdown.site itself unreachable — fall back to a direct HTTP probe
+        echo -e "${YELLOW}[!]${NC} isitdown.site API unreachable — probing crt.sh directly..."
+        local http_probe
+        http_probe=$(curl -o /dev/null -sw "%{http_code}" \
+            --max-time 8 "https://crt.sh/?q=example.com&output=json" 2>/dev/null)
+
+        if [[ "$http_probe" == "429" ]]; then
+            echo -e "${YELLOW}[!] crt.sh is rate-limiting (HTTP 429) — skipping crt.sh.${NC}"
+            crtsh_available=0
+        elif [[ "$http_probe" != "200" ]]; then
+            echo -e "${YELLOW}[!] crt.sh probe returned HTTP $http_probe — skipping crt.sh.${NC}"
+            crtsh_available=0
         else
-            echo "$crtsh_results" > "$crtsh_file"
-            echo -e "${GREEN}[+]${NC} crt.sh found: ${CYAN}$(wc -l < "$crtsh_file" | tr -d ' ')${NC} subdomains"
+            echo -e "${GREEN}[+]${NC} crt.sh is reachable (direct probe: HTTP $http_probe)."
+        fi
+    else
+        # Parse JSON from isitdown.site
+        if command -v jq &>/dev/null; then
+            is_down=$(echo "$isdown_result" | jq -r '.isitdown')
+            response_code=$(echo "$isdown_result" | jq -r '.response_code')
+        else
+            is_down=$(echo "$isdown_result" | python3 -c \
+                "import sys,json; d=json.load(sys.stdin); print(str(d['isitdown']).lower())" 2>/dev/null)
+            response_code=$(echo "$isdown_result" | python3 -c \
+                "import sys,json; d=json.load(sys.stdin); print(d['response_code'])" 2>/dev/null)
+        fi
+
+        if [[ "$is_down" == "true" ]]; then
+            echo -e "${YELLOW}[!] isitdown.site reports crt.sh is DOWN (code: $response_code) — skipping crt.sh.${NC}"
+            crtsh_available=0
+        else
+            echo -e "${GREEN}[+]${NC} crt.sh is UP (isitdown.site: code $response_code)."
         fi
     fi
 
-    # ── subfinder (inline, always runs regardless of crt.sh result) ──
+    # ── crt.sh query — only runs when availability check passes ──
+    if [[ "$crtsh_available" -eq 1 ]]; then
+        echo -e "${BLUE}[*]${NC} Querying crt.sh for domain: $req"
+        local response=""
+        local retry=0
+        while [ $retry -lt 3 ]; do
+            response=$(curl -s --max-time 20 --connect-timeout 10 \
+                "https://crt.sh/?q=%25.$req&output=json" 2>/dev/null)
+            local curl_exit=$?
+
+            # Catch session-level rate-limiting mid-scan
+            local live_code
+            live_code=$(curl -o /dev/null -sw "%{http_code}" --max-time 8 \
+                "https://crt.sh/?q=%25.$req&output=json" 2>/dev/null)
+            if [[ "$live_code" == "429" ]]; then
+                echo -e "${YELLOW}[!] crt.sh rate-limited this session (HTTP 429) — skipping crt.sh.${NC}"
+                response=""
+                break
+            fi
+
+            [ -n "$response" ] && [ "$response" != "[]" ] && break
+            retry=$(( retry + 1 ))
+            echo -e "${YELLOW}[!] crt.sh attempt $retry/3 failed or empty — retrying...${NC}"
+            sleep 2
+        done
+
+        if [ -z "$response" ] || [ "$response" = "[]" ]; then
+            echo -e "${YELLOW}[!] crt.sh unreachable or returned no results — continuing with subfinder only.${NC}"
+        else
+            crtsh_results=$(echo "$response" | jq -r '.[].common_name, .[].name_value' 2>/dev/null | CleanResults)
+            if [ -z "$crtsh_results" ]; then
+                echo -e "${YELLOW}[!] crt.sh response had no valid subdomains — continuing with subfinder only.${NC}"
+            else
+                echo "$crtsh_results" > "$crtsh_file"
+                echo -e "${GREEN}[+]${NC} crt.sh found: ${CYAN}$(wc -l < "$crtsh_file" | tr -d ' ')${NC} subdomains"
+            fi
+        fi
+    else
+        echo -e "${YELLOW}[!] crt.sh skipped — proceeding with subfinder only.${NC}"
+    fi
+
+    # ── subfinder (always runs regardless of crt.sh status) ──
     echo -e "${BLUE}[*]${NC} Running subfinder -d $req -all -silent ..."
     local subfinder_results=""
     if command -v subfinder &>/dev/null; then
